@@ -17,8 +17,43 @@
         </div>
 
         <script>
-            var app = new kendo.mobile.Application(document.body);
-        
+            
+            document.addEventListener("deviceready", init, false);
+            
+            function init() {
+                var app = new kendo.mobile.Application(document.body);
+            }
+            
+            var application = {
+            
+                openDB: function() {
+                    if (window.navigator.simulator)
+                        application.db = window.openDatabase("Northwind" , "1.0", "Offline Demo", 200000);
+                    else 
+                        application.db = window.sqlitePlugin.openDatabase({name: "Northwind.db"});
+                },
+            
+                createTable: function() {
+                    var db = application.db;
+                    db.transaction(function(tx) {
+                        tx.executeSql("CREATE TABLE IF NOT EXISTS Products (ProductId INTEGER PRIMARY KEY ASC, ProductName TEXT)", []);
+                    });
+                },
+            
+                addProduct: function (ProductName) {
+                    var db = application.db;
+                    db.transaction(function (tx) {
+                        tx.executeSql("INSERT INTO Products (ProductName) VALUES (?)", [ProductName], application.onSuccess, application.onError);
+                    });
+                },
+                onSuccess: function(tx, r) {
+                },
+            
+                onError: function (tx, e) {
+                    console.log("error " + e.message);
+                }
+            }
+            
             function ProductsOffline() {
                 //offline method 1
                 /* var ProductsData = [
@@ -40,65 +75,43 @@
                 });
                 $("#Products-offline-listview").kendoMobileListView({ dataSource: OfflineDataSource, template : $("#products-template").html()});*/ 
                 //offline method 3
-                var app = {};
-                app.db = null;
-                app.openDb = function() {
-                    if (window.navigator.simulator === true) 
-                        app.db = window.openDatabase("Northwind", "1.0", "Offline Demo", 200000);
-                    else 
-                        app.db = window.sqlitePlugin.openDatabase("Northwind");
-                }
-                app.createTable = function() {
-                    var db = app.db;
-                    db.transaction(function(tx) {
-                        tx.executeSql("CREATE TABLE IF NOT EXISTS Products(ProductId INTEGER PRIMARY KEY ASC, ProductName TEXT)", []);
-                    });
-                }
-                app.addProduct = function(ProductName) {
-                    var db = app.db;
-                    db.transaction(function(tx) {
-                        tx.executeSql("INSERT INTO Products(ProductName) VALUES (?)",
-                                      [ProductName],
-                                      app.onSuccess,
-                                      app.onError);
-                    });
-                }
-                app.onSuccess = function(tx, r) {
-                    console.log("Success");
-                }
-                app.onError = function(tx, e) {
-                    console.log("error");
-                } 
+                application.openDB();
+                application.createTable();
+                application.addProduct("Chocolate");
+                application.addProduct("Pasta");
+                application.addProduct("Rice");
+                application.addProduct("Noodles");
+            
                 var OfflineDataSource = new kendo.data.DataSource({
+            
                                                                       transport: {
-                        read: function(options) {
-                            app.openDb();
-                            app.createTable();
-                            app.addProduct("Chocolate");
-                            app.addProduct("Pasta");
-                            app.addProduct("Rice");
-                            var db = app.db;
-                            db.transaction(function(tx) {
-                                tx.executeSql('SELECT ProductName FROM Products', [],
+                        read:function(options) {
+                            var db = application.db;
+            
+                            db.transaction(function (tx) {
+                                tx.executeSql("SELECT ProductName FROM Products", [],
+                                
                                               function(tx, results) {
                                                   var data = [];
                                                   var len = results.rows.length;
-                                                  for (var i = 0; i < len; ++i) {
+                                                  for (var i = 0; i < len; i++) {
                                                       var obj = results.rows.item(i);
                                                       data[i] = obj;
                                                   }
                                                   options.success(data);
                                               },
-                                              function(tx, error) {
-                                                  console.log("selectProducts error");
+                                              function (tx, error) {
+                                                  console.log("error");
                                               }
                                     );
                             });
                         }
                     }
                                                                   });
-                $("#Products-offline-listview").kendoMobileListView({ dataSource: OfflineDataSource, template : $("#products-template").html()}); 
+            
+                $("#Products-offline-listview").kendoMobileListView({ dataSource: OfflineDataSource, template : $("#products-template").html()});
             }
+            
             
             
             
@@ -107,8 +120,8 @@
         <script type="text/x-kendo-template" id="products-template">
             
             #: ProductName #
-            
         </script>
     </body>
 </html>
-            
+
+    

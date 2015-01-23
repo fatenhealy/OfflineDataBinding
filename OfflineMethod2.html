@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title></title>
+        <meta charset="utf-8" />
+        <link href="kendo/styles/kendo.mobile.all.min.css" rel="stylesheet" />
+
+        <script src="cordova.js"></script>
+        <script src="kendo/js/jquery.min.js"></script>
+        <script src="kendo/js/kendo.mobile.min.js"></script>
+
+    </head>
+    <body>
+
+        <div data-role="view" data-init="ProductsOffline">
+            <ul id="Products-offline-listview"></ul>
+        </div>
+
+        <script>
+            var app = new kendo.mobile.Application(document.body);
+        
+            function ProductsOffline() {
+                //offline method 1
+                /* var ProductsData = [
+                {"ProductId": 1, "ProductName": "Orange"},
+                {"ProductId": 2, "ProductName": "Apple"},
+                {"ProductId": 3, "ProductName": "Cherries"},
+                {"ProductId": 4, "ProductName": "Bananas"}
+                ];
+                var OfflineDataSource = new kendo.data.DataSource({data: ProductsData});
+                $("#Products-offline-listview").kendoMobileListView({ dataSource: OfflineDataSource, template : $("#products-template").html()}); */
+                //offline method 2 
+                var OfflineDataSource = new kendo.data.DataSource({
+                                                                      transport: {
+                        read: {
+                                                                                  url: "data/Products.json",
+                                                                                  dataType: "json"
+                                                                              }
+                    }
+                                                                  });
+                $("#Products-offline-listview").kendoMobileListView({ dataSource: OfflineDataSource, template : $("#products-template").html()});
+            }
+            
+        </script>
+        
+        <script type="text/x-kendo-template" id="products-template">
+        
+            #: ProductName #
+        </script>
+    </body>
+</html>
+
+    
